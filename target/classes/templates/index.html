@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout}">
+<head><title>Wanderlust – Discover Your Next Adventure</title></head>
+<body>
+<main layout:fragment="content">
+
+    <!-- ░░ HERO ░░ -->
+    <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content animate-fade-up">
+            <div class="hero-badge">
+                <i class="fa-solid fa-star" style="font-size:.65rem"></i>
+                Premium Travel Experiences
+            </div>
+            <h1 class="display-hero hero-title">Discover Your<br>Next Adventure</h1>
+            <p class="hero-sub">Handpicked destinations, seamless bookings, and memories that last a lifetime.</p>
+            <a href="#packages" class="hero-cta">
+                <i class="fa-solid fa-compass"></i> Explore Packages
+            </a>
+            <div class="hero-stats">
+                <div>
+                    <div class="hero-stat-value">200+</div>
+                    <div class="hero-stat-label">Destinations</div>
+                </div>
+                <div>
+                    <div class="hero-stat-value">12k+</div>
+                    <div class="hero-stat-label">Travelers</div>
+                </div>
+                <div>
+                    <div class="hero-stat-value">4.9★</div>
+                    <div class="hero-stat-label">Rating</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ░░ SEARCH & FILTER BAR ░░ -->
+    <div class="search-section" id="packages">
+        <div class="container">
+            <form th:action="@{/}" method="get" class="search-form">
+                <div class="search-row">
+                    <div class="search-input-wrap">
+                        <i class="fa-solid fa-magnifying-glass search-icon-inside"></i>
+                        <input type="text" name="search" class="search-input"
+                               th:value="${search}" placeholder="Search destination or package...">
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Min Price ($)</label>
+                        <input type="number" name="minPrice" class="filter-input"
+                               th:value="${minPrice > 0 ? minPrice : ''}" placeholder="0" min="0">
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Max Price ($)</label>
+                        <input type="number" name="maxPrice" class="filter-input"
+                               th:value="${maxPrice > 0 ? maxPrice : ''}" placeholder="Any" min="0">
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Max Days</label>
+                        <input type="number" name="maxDays" class="filter-input"
+                               th:value="${maxDays > 0 ? maxDays : ''}" placeholder="Any" min="0">
+                    </div>
+                    <button type="submit" class="btn-search">
+                        <i class="fa-solid fa-filter"></i> Filter
+                    </button>
+                    <a th:href="@{/}" class="btn-clear" th:if="${isFiltered}">
+                        <i class="fa-solid fa-xmark"></i> Clear
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ░░ FEATURED PACKAGES ░░ -->
+    <section class="section" style="padding-top:40px">
+        <div class="container">
+            <div class="section-header animate-fade-up">
+                <span class="section-eyebrow" th:text="${isFiltered} ? 'Search Results' : 'Curated For You'">Curated For You</span>
+                <h2 class="section-title">
+                    <span th:if="${isFiltered}">Found <span th:text="${#lists.size(packages)}"></span> Package(s)</span>
+                    <span th:unless="${isFiltered}">Featured Tour Packages</span>
+                </h2>
+                <div class="section-divider"></div>
+            </div>
+
+            <!-- Package Grid -->
+            <div class="pkg-grid" th:if="${not #lists.isEmpty(packages)}">
+                <div class="pkg-card animate-fade-up" th:each="pkg, i : ${packages}"
+                     th:classappend="${i.index == 0} ? 'delay-1' : (${i.index == 1} ? 'delay-2' : 'delay-3')">
+
+                    <div class="pkg-img-wrap">
+                        <img th:src="${pkg.destination.imageUrl}"
+                             th:alt="${pkg.destination.name}"
+                             onerror="this.src='https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80'">
+                        <div class="pkg-price-badge">
+                            $<span th:text="${#numbers.formatDecimal(pkg.price, 0, 0)}"></span>
+                        </div>
+                    </div>
+
+                    <div class="pkg-body">
+                        <h4 class="pkg-title" th:text="${pkg.title}">Package Title</h4>
+                        <div class="pkg-location">
+                            <i class="fa-solid fa-location-dot" style="color:#0ea5e9"></i>
+                            <span th:text="${pkg.destination.name}"></span>,&nbsp;
+                            <span th:text="${pkg.destination.country}"></span>
+                        </div>
+                        <p class="pkg-desc" th:text="${pkg.destination.description}">Description</p>
+                    </div>
+
+                    <div class="pkg-meta">
+                        <span><i class="fa-regular fa-clock"></i>&nbsp;<span th:text="${pkg.durationDays}"></span> Days</span>
+                        <span>
+                            <i class="fa-solid fa-chair"></i>&nbsp;<span th:text="${pkg.availableSeats}"></span> Seats
+                        </span>
+                    </div>
+
+                    <div class="pkg-footer">
+                        <div sec:authorize="hasRole('ROLE_USER')">
+                            <form th:action="@{/user/book}" method="post" class="book-form">
+                                <input type="hidden" name="packageId" th:value="${pkg.id}">
+                                <div class="form-row">
+                                    <input type="date" name="travelDate" required>
+                                    <input type="number" name="travelers" min="1"
+                                           th:max="${pkg.availableSeats}" value="1" required>
+                                </div>
+                                <button type="submit" class="btn-book"
+                                        th:disabled="${pkg.availableSeats == 0}">
+                                    <span th:if="${pkg.availableSeats > 0}"><i class="fa-solid fa-ticket"></i> Book Now</span>
+                                    <span th:if="${pkg.availableSeats == 0}">Sold Out</span>
+                                </button>
+                            </form>
+                        </div>
+                        <div sec:authorize="!hasRole('ROLE_USER')">
+                            <a th:href="@{/login}" class="btn-login-cta">
+                                <i class="fa-solid fa-lock" style="font-size:.75rem"></i> Login to Book
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state animate-fade-in" th:if="${#lists.isEmpty(packages)}">
+                <i class="fa-solid fa-suitcase"></i>
+                <p th:if="${isFiltered}">No packages match your filters. <a th:href="@{/}" style="color:var(--primary);font-weight:600">Clear filters</a></p>
+                <p th:unless="${isFiltered}">No tour packages available yet. Check back soon!</p>
+            </div>
+        </div>
+    </section>
+
+</main>
+</body>
+</html>

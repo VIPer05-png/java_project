@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head><title>Wanderlust – My Bookings</title></head>
+<body>
+<main layout:fragment="content">
+    <div class="user-page">
+        <div class="container">
+
+            <h2 class="page-title animate-fade-up">
+                <i class="fa-solid fa-suitcase-rolling" style="color:var(--primary)"></i>
+                My Bookings
+            </h2>
+
+            <div th:if="${param.booked}" class="wl-alert wl-alert-success animate-fade-in" style="margin-bottom:24px">
+                <i class="fa-solid fa-check-circle"></i> Trip booked successfully! Pack your bags! 🧳
+            </div>
+            <div th:if="${param.cancelled}" class="wl-alert wl-alert-danger animate-fade-in" style="margin-bottom:24px">
+                <i class="fa-solid fa-circle-xmark"></i> Booking cancelled. Seats have been restored.
+            </div>
+
+            <div class="wl-card animate-fade-up delay-1">
+                <div style="overflow-x:auto">
+                    <table class="wl-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Destination</th>
+                                <th>Package</th>
+                                <th>Travel Date</th>
+                                <th>Travelers</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="booking : ${bookings}">
+                                <td style="font-weight:700;color:var(--text-muted)">#<span th:text="${booking.id}"></span></td>
+                                <td>
+                                    <strong th:text="${booking.tourPackage.destination.name}"></strong><br>
+                                    <small style="color:var(--text-muted)" th:text="${booking.tourPackage.destination.country}"></small>
+                                </td>
+                                <td th:text="${booking.tourPackage.title}"></td>
+                                <td th:text="${booking.travelDate}"></td>
+                                <td style="text-align:center">
+                                    <i class="fa-solid fa-person" style="color:var(--text-muted)"></i>
+                                    <span th:text="${booking.numberOfTravelers}"></span>
+                                </td>
+                                <td>
+                                    <span class="badge-wl badge-confirmed" th:if="${booking.status == 'CONFIRMED'}">Confirmed</span>
+                                    <span class="badge-wl badge-cancelled" th:if="${booking.status == 'CANCELLED'}">Cancelled</span>
+                                    <span class="badge-wl badge-pending"
+                                          th:if="${booking.status != 'CONFIRMED' and booking.status != 'CANCELLED'}"
+                                          th:text="${booking.status}">Pending</span>
+                                </td>
+                                <td>
+                                    <form th:if="${booking.status == 'CONFIRMED'}"
+                                          th:action="@{/user/cancel/{id}(id=${booking.id})}" method="post"
+                                          onsubmit="return confirm('Cancel this booking?')">
+                                        <button type="submit" class="btn-cancel-sm">
+                                            <i class="fa-solid fa-xmark"></i> Cancel
+                                        </button>
+                                    </form>
+                                    <span th:if="${booking.status != 'CONFIRMED'}" style="color:var(--text-light);font-size:.75rem">—</span>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(bookings)}">
+                                <td colspan="7">
+                                    <div class="empty-state">
+                                        <i class="fa-solid fa-suitcase"></i>
+                                        <p>No bookings yet. <a th:href="@{/}" style="color:var(--primary);font-weight:600">Explore packages →</a></p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</main>
+</body>
+</html>

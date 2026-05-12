@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head><title>Wanderlust – Admin Dashboard</title></head>
+<body>
+<main layout:fragment="content">
+    <div class="admin-page">
+        <div class="container">
+
+            <!-- Page Title -->
+            <h2 class="page-title animate-fade-up">
+                <i class="fa-solid fa-shield-halved" style="color:#f59e0b"></i>
+                Admin Dashboard
+            </h2>
+
+            <!-- Flash messages -->
+            <div th:if="${param.destAdded}"   class="wl-alert wl-alert-success" style="margin-bottom:20px"><i class="fa-solid fa-check-circle"></i> Destination added!</div>
+            <div th:if="${param.pkgAdded}"    class="wl-alert wl-alert-success" style="margin-bottom:20px"><i class="fa-solid fa-check-circle"></i> Package added!</div>
+            <div th:if="${param.pkgDeleted}"  class="wl-alert wl-alert-danger"  style="margin-bottom:20px"><i class="fa-solid fa-trash"></i> Package deleted.</div>
+            <div th:if="${param.destDeleted}" class="wl-alert wl-alert-danger"  style="margin-bottom:20px"><i class="fa-solid fa-trash"></i> Destination deleted.</div>
+
+            <!-- ── Stat Cards ── -->
+            <div class="row g-4 mb-5 animate-fade-up delay-1">
+                <div class="col-md-4">
+                    <div class="stat-card stat-card-blue">
+                        <div>
+                            <div class="stat-label">Total Users</div>
+                            <div class="stat-value" th:text="${totalUsers}">0</div>
+                        </div>
+                        <i class="fa-solid fa-users stat-icon"></i>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card stat-card-green">
+                        <div>
+                            <div class="stat-label">Total Bookings</div>
+                            <div class="stat-value" th:text="${totalBookings}">0</div>
+                        </div>
+                        <i class="fa-solid fa-ticket stat-icon"></i>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card stat-card-dark">
+                        <div>
+                            <div class="stat-label">Destinations</div>
+                            <div class="stat-value" th:text="${#lists.size(destinations)}">0</div>
+                        </div>
+                        <i class="fa-solid fa-map-location-dot stat-icon"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Main Grid ── -->
+            <div class="row g-4 animate-fade-up delay-2">
+
+                <!-- Left Column: Forms -->
+                <div class="col-lg-4">
+
+                    <!-- Add Destination -->
+                    <div class="wl-card mb-4">
+                        <div class="wl-card-header">
+                            <i class="fa-solid fa-plus-circle"></i> Add Destination
+                        </div>
+                        <div class="wl-card-body">
+                            <form th:action="@{/admin/add-destination}" method="post">
+                                <input type="text"  name="name"        class="ctrl" placeholder="City Name"   required>
+                                <input type="text"  name="country"     class="ctrl" placeholder="Country"      required>
+                                <textarea           name="description" class="ctrl" placeholder="Description"  required></textarea>
+                                <input type="url"   name="imageUrl"    class="ctrl" placeholder="Image URL (optional)">
+                                <button type="submit" class="btn-submit">
+                                    <i class="fa-solid fa-floppy-disk"></i> Save Destination
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Add Package -->
+                    <div class="wl-card">
+                        <div class="wl-card-header">
+                            <i class="fa-solid fa-plus-circle"></i> Add Package
+                        </div>
+                        <div class="wl-card-body">
+                            <form th:action="@{/admin/add-package}" method="post">
+                                <select name="destination" class="ctrl" required>
+                                    <option value="" disabled selected>Select Destination</option>
+                                    <option th:each="dest : ${destinations}"
+                                            th:value="${dest.id}"
+                                            th:text="${dest.name}"></option>
+                                </select>
+                                <input type="text" name="title" class="ctrl" placeholder="Package Title" required>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+                                    <input type="number" name="price"        class="ctrl" style="margin-bottom:0" placeholder="Price ($)" step="0.01" required>
+                                    <input type="number" name="durationDays" class="ctrl" style="margin-bottom:0" placeholder="Days"      required>
+                                </div>
+                                <input type="number" name="availableSeats" class="ctrl" placeholder="Available Seats" required>
+                                <button type="submit" class="btn-submit">
+                                    <i class="fa-solid fa-floppy-disk"></i> Save Package
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Right Column: Bookings Table -->
+                <div class="col-lg-8">
+                    <div class="wl-card mb-4">
+                        <div class="wl-card-header">
+                            <i class="fa-solid fa-list-check"></i> All Bookings
+                        </div>
+                        <div style="overflow-x:auto">
+                            <table class="wl-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>User</th>
+                                        <th>Package</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="booking : ${bookings}">
+                                        <td style="color:var(--text-muted);font-weight:600">#<span th:text="${booking.id}"></span></td>
+                                        <td>
+                                            <i class="fa-solid fa-user" style="color:var(--primary);margin-right:4px"></i>
+                                            <span th:text="${booking.user.username}"></span>
+                                        </td>
+                                        <td th:text="${booking.tourPackage.title}"></td>
+                                        <td th:text="${booking.travelDate}"></td>
+                                        <td>
+                                            <span class="badge-wl badge-confirmed" th:if="${booking.status == 'CONFIRMED'}">Confirmed</span>
+                                            <span class="badge-wl badge-cancelled" th:if="${booking.status == 'CANCELLED'}">Cancelled</span>
+                                            <span class="badge-wl badge-pending"
+                                                  th:if="${booking.status != 'CONFIRMED' and booking.status != 'CANCELLED'}"
+                                                  th:text="${booking.status}">Pending</span>
+                                        </td>
+                                        <td>
+                                            <!-- Toggle to CONFIRMED -->
+                                            <form th:if="${booking.status == 'CANCELLED'}"
+                                                  th:action="@{/admin/update-booking/{id}(id=${booking.id})}" method="post" style="display:inline">
+                                                <input type="hidden" name="status" value="CONFIRMED">
+                                                <button type="submit" class="btn-action-sm btn-confirm-sm">
+                                                    <i class="fa-solid fa-check"></i> Confirm
+                                                </button>
+                                            </form>
+                                            <!-- Toggle to CANCELLED -->
+                                            <form th:if="${booking.status == 'CONFIRMED'}"
+                                                  th:action="@{/admin/update-booking/{id}(id=${booking.id})}" method="post" style="display:inline"
+                                                  onsubmit="return confirm('Cancel this booking?')">
+                                                <input type="hidden" name="status" value="CANCELLED">
+                                                <button type="submit" class="btn-action-sm btn-del-sm">
+                                                    <i class="fa-solid fa-xmark"></i> Cancel
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(bookings)}">
+                                        <td colspan="6">
+                                            <div class="empty-state">
+                                                <i class="fa-solid fa-inbox"></i>
+                                                <p>No bookings yet</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Packages Table -->
+                    <div class="wl-card">
+                        <div class="wl-card-header">
+                            <i class="fa-solid fa-suitcase" style="color:var(--accent)"></i> All Packages
+                        </div>
+                        <div style="overflow-x:auto">
+                            <table class="wl-table">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Destination</th>
+                                        <th>Price</th>
+                                        <th>Days</th>
+                                        <th>Seats</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="pkg : ${packages}">
+                                        <td th:text="${pkg.title}"></td>
+                                        <td>
+                                            <span th:text="${pkg.destination.name}"></span>,
+                                            <small style="color:var(--text-muted)" th:text="${pkg.destination.country}"></small>
+                                        </td>
+                                        <td style="font-weight:700;color:var(--primary)">$<span th:text="${#numbers.formatDecimal(pkg.price,0,0)}"></span></td>
+                                        <td th:text="${pkg.durationDays}"></td>
+                                        <td th:text="${pkg.availableSeats}"></td>
+                                        <td>
+                                            <form th:action="@{/admin/delete-package/{id}(id=${pkg.id})}" method="post"
+                                                  onsubmit="return confirm('Delete this package?')">
+                                                <button type="submit" class="btn-action-sm btn-del-sm">
+                                                    <i class="fa-solid fa-trash"></i> Delete
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(packages)}">
+                                        <td colspan="6">
+                                            <div class="empty-state"><i class="fa-solid fa-inbox"></i><p>No packages yet</p></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>
